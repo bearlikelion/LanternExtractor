@@ -184,11 +184,12 @@ namespace LanternExtractor.EQ.Wld
 
                         string basename = cleanedName;
 
-                        bool endsWithNumber = char.IsDigit(cleanedName[cleanedName.Length - 1]);
+                        bool endsWithNumber = cleanedName.Length >= 2
+                            && char.IsDigit(cleanedName[cleanedName.Length - 1])
+                            && char.IsDigit(cleanedName[cleanedName.Length - 2]);
 
                         if (endsWithNumber)
                         {
-                            int id = Convert.ToInt32(cleanedName.Substring(cleanedName.Length - 2));
                             cleanedName = cleanedName.Substring(0, cleanedName.Length - 2);
 
                             if (cleanedName.Length != 3)
