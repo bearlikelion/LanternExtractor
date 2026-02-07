@@ -16,6 +16,8 @@ using System.Numerics;
 using WldColor = LanternExtractor.EQ.Wld.DataTypes.Color;
 using Animation = LanternExtractor.EQ.Wld.DataTypes.Animation;
 using System.Drawing.Imaging;
+using LanternExtractor.Infrastructure;
+using Serilog;
 namespace LanternExtractor.EQ.Wld.Exporters
 {
     public class GltfWriter : TextAssetWriter
@@ -166,7 +168,7 @@ namespace LanternExtractor.EQ.Wld.Exporters
 
                     if (!File.Exists(imagePath))
                     {
-                        _logger.LogError($"Texture file not found: {imagePath}. Skipping material {materialName}.");
+                        Log.Error($"Texture file not found: {imagePath}. Skipping material {materialName}.");
                         continue;
                     }
 
@@ -495,7 +497,7 @@ namespace LanternExtractor.EQ.Wld.Exporters
             }
             catch (SharpGLTF.Validation.SchemaException ex) when (ex.Message.Contains("MorphTargetsCount"))
             {
-                _logger.LogError($"Morph target validation failed for {Path.GetFileName(outputFilePath)}: {ex.Message}. Saving without validation.");
+                Log.Error($"Morph target validation failed for {Path.GetFileName(outputFilePath)}: {ex.Message}. Saving without validation.");
                 var fallbackSettings = writeSettings ?? new SharpGLTF.Schema2.WriteSettings();
                 fallbackSettings.Validation = SharpGLTF.Validation.ValidationMode.Skip;
                 if (writeSettings != null && writeSettings.ImageWriteCallback != null)
@@ -514,7 +516,7 @@ namespace LanternExtractor.EQ.Wld.Exporters
             }
             catch (SharpGLTF.Validation.SchemaException ex) when (ex.Message.Contains("MorphTargetsCount"))
             {
-                _logger.LogError($"Morph target validation failed for {Path.GetFileName(outputFilePath)}: {ex.Message}. Saving without validation.");
+                Log.Error($"Morph target validation failed for {Path.GetFileName(outputFilePath)}: {ex.Message}. Saving without validation.");
                 var fallbackSettings = new SharpGLTF.Schema2.WriteSettings
                 {
                     Validation = SharpGLTF.Validation.ValidationMode.Skip
