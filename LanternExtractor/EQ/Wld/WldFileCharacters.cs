@@ -185,7 +185,11 @@ namespace LanternExtractor.EQ.Wld
                         string basename = cleanedName;
                         bool endsWithTwoDigits = cleanedName.Substring(cleanedName.Length - 2).All((c) => char.IsDigit(c));
 
-                        if (endsWithTwoDigits)
+                        bool endsWithNumber = cleanedName.Length >= 2
+                            && char.IsDigit(cleanedName[cleanedName.Length - 1])
+                            && char.IsDigit(cleanedName[cleanedName.Length - 2]);
+
+                        if (endsWithNumber)
                         {
                             cleanedName = cleanedName.Substring(0, cleanedName.Length - 2);
 

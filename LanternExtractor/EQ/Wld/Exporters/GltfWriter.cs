@@ -164,6 +164,12 @@ namespace LanternExtractor.EQ.Wld.Exporters
 
                     var imagePath = $"{textureImageFolder}{eqMaterial.GetFirstBitmapExportFilename()}";
 
+                    if (!File.Exists(imagePath))
+                    {
+                        _logger.LogError($"Texture file not found: {imagePath}. Skipping material {materialName}.");
+                        continue;
+                    }
+
                     ImageBuilder imageBuilder;
                     if (ShaderTypesThatNeedAlphaAddedToImage.Contains(eqMaterial.ShaderType))
                     {
@@ -453,7 +459,7 @@ namespace LanternExtractor.EQ.Wld.Exporters
             {
                 if (!useExistingImages)
                 {
-                    model.SaveGLTF(outputFilePath);
+                    SaveGltfWithFallback(model, outputFilePath, null);
                     return;
                 }
                 var writeSettings = new SharpGLTF.Schema2.WriteSettings()
@@ -466,11 +472,54 @@ namespace LanternExtractor.EQ.Wld.Exporters
                     }
                 };
 
-                model.SaveGLTF(outputFilePath, writeSettings);
+                SaveGltfWithFallback(model, outputFilePath, writeSettings);
             }
             else // Glb
             {
+                SaveGlbWithFallback(model, outputFilePath);
+            }
+        }
+
+        private void SaveGltfWithFallback(SharpGLTF.Schema2.ModelRoot model, string outputFilePath, SharpGLTF.Schema2.WriteSettings writeSettings)
+        {
+            try
+            {
+                if (writeSettings != null)
+                {
+                    model.SaveGLTF(outputFilePath, writeSettings);
+                }
+                else
+                {
+                    model.SaveGLTF(outputFilePath);
+                }
+            }
+            catch (SharpGLTF.Validation.SchemaException ex) when (ex.Message.Contains("MorphTargetsCount"))
+            {
+                _logger.LogError($"Morph target validation failed for {Path.GetFileName(outputFilePath)}: {ex.Message}. Saving without validation.");
+                var fallbackSettings = writeSettings ?? new SharpGLTF.Schema2.WriteSettings();
+                fallbackSettings.Validation = SharpGLTF.Validation.ValidationMode.Skip;
+                if (writeSettings != null && writeSettings.ImageWriteCallback != null)
+                {
+                    fallbackSettings.ImageWriteCallback = writeSettings.ImageWriteCallback;
+                }
+                model.SaveGLTF(outputFilePath, fallbackSettings);
+            }
+        }
+
+        private void SaveGlbWithFallback(SharpGLTF.Schema2.ModelRoot model, string outputFilePath)
+        {
+            try
+            {
                 model.SaveGLB(outputFilePath);
+            }
+            catch (SharpGLTF.Validation.SchemaException ex) when (ex.Message.Contains("MorphTargetsCount"))
+            {
+                _logger.LogError($"Morph target validation failed for {Path.GetFileName(outputFilePath)}: {ex.Message}. Saving without validation.");
+                var fallbackSettings = new SharpGLTF.Schema2.WriteSettings
+                {
+                    Validation = SharpGLTF.Validation.ValidationMode.Skip
+                };
+                model.SaveGLB(outputFilePath, fallbackSettings);
             }
         }
         public override void ClearExportData()
